@@ -34,7 +34,6 @@ void LoadTexture(GLuint& texture, const char* tFileName, GLuint* texture_id);
 void Sleep(int ms);
 glm::mat4 getV();
 glm::mat4 getP();
-void video();
 void demo();
 
 GLuint Dissolveprogram, Modelprogram, Erect3program, Frag3program, Erect4program, Frag4program;
@@ -82,7 +81,6 @@ int main(int argc, char** argv) {
 //control parameter
 #define Effect_TIME 240
 bool rotate_f = false;
-bool video_f = false;
 bool model_f = true;
 bool erect_f = false;
 bool frag_f = false;
@@ -92,7 +90,6 @@ unsigned int sec = 0;
 
 void keyboard(unsigned char key, int x, int y) {
 	model_f = true;
-	video_f = false;
 	switch (key) {
 	// disable all effect
 	case '1':
@@ -137,14 +134,6 @@ void keyboard(unsigned char key, int x, int y) {
 	case 'x':
 	{
 		who = !who;
-		break;
-	}
-	case 'v':
-	{
-		model_f = false;
-		video_f = true;
-		angle = 0;
-		sec = 0;
 		break;
 	}
 	default:
@@ -356,75 +345,6 @@ glm::mat4 getP()
 }
 
 // ### hint
-// you should change the whole content below, I think that is easier to create the effect you want than reusing the code below
-void video() {
-	// basic transformation matrix apply on all models
-	glm::mat4 base_M(1.0f);
-	base_M = glm::rotate(base_M, glm::radians(angle), glm::vec3(0, 1, 0));
-
-	// draw Umbreon
-	glm::mat4 M1(base_M);
-	M1 = glm::scale(M1, glm::vec3(1, 1, 1));
-	// show the model between two line(specifically is a plane)
-	glm::vec4 back_line(0, 0, Umbreon->min_z, 1);
-	glm::vec4 front_line(0, 0, Umbreon->max_z, 1);
-	glm::vec4 base_line_normal(0, 0, 1, 0);
-	// control the dissolve effect to same druation
-	GLfloat Umbreon_effect_t = (Umbreon->max_z - Umbreon->min_z) / Effect_TIME;
-	if (back_line.z < Umbreon->max_z) {
-		back_line.z += Umbreon_effect_t * sec;
-	}
-	// remeber to use program before passing value to uniformal variable
-	glUseProgram(Dissolveprogram);
-		GLuint vecID = glGetUniformLocation(Dissolveprogram, "back_line");
-		glUniform4fv(vecID, 1, &back_line[0]);
-		vecID = glGetUniformLocation(Dissolveprogram, "front_line");
-		glUniform4fv(vecID, 1, &front_line[0]);
-		vecID = glGetUniformLocation(Dissolveprogram, "base_line_normal");
-		glUniform4fv(vecID, 1, glm::value_ptr(base_line_normal));
-	glUseProgram(0);
-	glUseProgram(Erect4program);
-		// only create the "Goosebump" effect (I think it's look like pokemon erecting its hair) in a fixed range 
-		front_line = back_line + 0.5f * base_line_normal;
-		vecID = glGetUniformLocation(Erect4program, "back_line");
-		glUniform4fv(vecID, 1, &back_line[0]);
-		vecID = glGetUniformLocation(Erect4program, "front_line");
-		glUniform4fv(vecID, 1, &front_line[0]);
-		vecID = glGetUniformLocation(Erect4program, "base_line_normal");
-		glUniform4fv(vecID, 1, &base_line_normal[0]);
-	glUseProgram(0);
-	DrawModel(Umbreon, Dissolveprogram, Umbreon_VAO, Umbreon_texture_ID, M1, GL_QUADS);
-	// disable detpth to prevent erect shader result to be culled
-	glDepthFunc(GL_ALWAYS);
-	// ### hint
-	// be careful of the drawing mode of "Umbreon" is "GL_LINES_ADJACENCY" because of the Umbreon is composed of QUADS and geometry shader can't support the GL_QUADS mode
-		DrawModel(Umbreon, Erect4program, Umbreon_VAO, Umbreon_texture_ID, M1, GL_LINES_ADJACENCY);
-	glDepthFunc(GL_LEQUAL);
-
-	// draw Eevee
-	glm::mat4 M2(base_M);
-	M2 = glm::translate(M2, glm::vec3(0, -0.8, 0));
-	M2 = glm::rotate(M2, glm::radians(angle), glm::vec3(0, 1, 0));
-	M2 = glm::rotate(M2, glm::radians(90.0f), glm::vec3(1, 0, 0));
-	M2 = glm::scale(M2, glm::vec3(0.25, 0.25, 0.25));
-
-	GLfloat Eevee_effect_t = (Eevee->max_y - Eevee->min_y) / Effect_TIME;
-	glUseProgram(Dissolveprogram);
-		// dissolve effect in inverse direction
-		back_line = glm::vec4(0, Eevee->min_y, 0, 1);
-		base_line_normal = glm::vec4(0, 1, 0, 0);
-		front_line = back_line + Eevee_effect_t * sec;
-		vecID = glGetUniformLocation(Dissolveprogram, "back_line");
-		glUniform4fv(vecID, 1, &back_line[0]);
-		vecID = glGetUniformLocation(Dissolveprogram, "base_line_normal");
-		glUniform4fv(vecID, 1, glm::value_ptr(base_line_normal));
-		vecID = glGetUniformLocation(Dissolveprogram, "front_line");
-		glUniform4fv(vecID, 1, &front_line[0]);
-	glUseProgram(0);
-	DrawModel(Eevee, Dissolveprogram, Eevee_VAO, Eevee_texture_ID, M2, GL_TRIANGLES);
-}
-
-// ### hint
 // Don't be afraid of this hw. It looks like a lot of code because I need to make sure tha all effect (3 kind of shader) can show with two model in different drawing way .
 // You can just focus on one of effect(specifically reading expand.geom & knowing how it works ) to write your shader and create the effect you want to be displaied on video. 
 // Reminding again : Eevee model & Umbreon model are composed of different polygon . (Don't forget Pikachu which is also provided in this homework. you can ues it.)
@@ -561,9 +481,6 @@ void demo() {
 				DrawModel(Umbreon, Modelprogram, Umbreon_VAO, Umbreon_texture_ID, M1, GL_QUADS);
 			}
 		}
-	}
-	if (video_f) {
-		video();
 	}
 	if (rotate_f) {
 		angle++;
