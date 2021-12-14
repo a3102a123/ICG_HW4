@@ -143,11 +143,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="dll\Shaders\expand.frag" />
-    <None Include="dll\Shaders\expand.geom" />
-    <None Include="dll\Shaders\expand.vert" />
     <None Include="dll\Shaders\dissolve.frag" />
     <None Include="dll\Shaders\dissolve.vert" />
+    <None Include="dll\Shaders\expand3.frag" />
+    <None Include="dll\Shaders\expand3.geom" />
+    <None Include="dll\Shaders\expand3.vert" />
+    <None Include="dll\Shaders\expand4.frag" />
+    <None Include="dll\Shaders\expand4.geom" />
+    <None Include="dll\Shaders\expand4.vert" />
     <None Include="dll\Shaders\model.frag" />
     <None Include="dll\Shaders\model.vert" />
   </ItemGroup>
